@@ -1,0 +1,10 @@
+node_modules
+dist
+build
+.env
+.crush
+.crush.json
+crush.json
+.cursor
+personalities.db
+

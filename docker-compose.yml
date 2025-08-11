@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  orenchi-ai-bot:
+    build: .
+    container_name: orenchi-ai-bot
+    env_file:
+      - .env
+    volumes:
+      - orenchi-ai-data:/usr/src/app
+    restart: unless-stopped
+
+volumes:
+  orenchi-ai-data:

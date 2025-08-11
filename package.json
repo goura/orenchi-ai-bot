@@ -1,0 +1,27 @@
+{
+  "name": "orenchi-ai-bot",
+  "module": "src/index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "bun test",
+    "dev": "bun run src/index.ts",
+    "start": "bun run src/index.ts",
+    "build": "bun build src/index.ts --outfile dist/index.js --target bun",
+    "deploy-commands": "bun run src/deploy-commands.ts",
+    "docker:build": "docker build -t orenchi-ai-bot .",
+    "docker:run": "docker run -it --rm --env-file .env orenchi-ai-bot",
+    "docker:compose:up": "docker-compose up -d",
+    "docker:compose:down": "docker-compose down"
+  },
+  "dependencies": {
+    "discord.js": "^14.14.1",
+    "openai": "^5.12.2"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}
