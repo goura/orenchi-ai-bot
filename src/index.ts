@@ -1,3 +1,5 @@
+#!/usr/bin/env bun
+
 import { Client, GatewayIntentBits, Events, Message, ChannelType, Guild, PartialGroupDMChannel, TextChannel } from "discord.js";
 import type { Interaction } from "discord.js";
 import { DiscordBot } from "./bot/DiscordBot";

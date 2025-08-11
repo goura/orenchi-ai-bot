@@ -2,7 +2,10 @@
   "name": "orenchi-ai-bot",
   "module": "src/index.ts",
   "type": "module",
-  "private": true,
+  "private": false,
+  "bin": {
+    "orenchi-ai-bot": "./src/index.ts"
+  },
   "scripts": {
     "test": "bun test",
     "dev": "bun run src/index.ts",
