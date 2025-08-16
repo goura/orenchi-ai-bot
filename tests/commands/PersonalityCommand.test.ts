@@ -67,3 +67,9 @@ test("should return current personality when no text is provided", async () => {
   const result = command.getPersonality(userId);
   expect(result).toBe(personality);
 });
+
+test("should return null when getting personality for user with no personality set", () => {
+  // Test with a user ID that has never had a personality set
+  const result = command.getPersonality("user-without-personality");
+  expect(result).toBeNull();
+});

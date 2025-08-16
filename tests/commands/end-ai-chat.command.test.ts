@@ -71,7 +71,7 @@ test("should not delete irrelevant channels when ending AI chat", async () => {
   const user = createMockUser("testuser");
   
   // Create channels - one relevant (AI chat channel for this user) and one irrelevant
-  const relevantChannel = createMockTextChannel("ai-chat-testuser-1234567890-abcd", "relevant-channel-id");
+  const relevantChannel = createMockTextChannel("ai-chat-1234567890-testuser-abcd", "relevant-channel-id");
   const irrelevantChannel = createMockTextChannel("general", "irrelevant-channel-id");
   
   // Create a guild with both channels
@@ -114,8 +114,8 @@ test("should not delete channels for different users", async () => {
   const user = createMockUser("testuser");
   
   // Create channels - one for this user and one for a different user
-  const userChannel = createMockTextChannel("ai-chat-testuser-1234567890-abcd", "user-channel-id");
-  const otherUserChannel = createMockTextChannel("ai-chat-otheruser-1234567890-efgh", "other-user-channel-id");
+  const userChannel = createMockTextChannel("ai-chat-1234567890-testuser-abcd", "user-channel-id");
+  const otherUserChannel = createMockTextChannel("ai-chat-1234567890-otheruser-efgh", "other-user-channel-id");
   const generalChannel = createMockTextChannel("general", "general-channel-id");
   
   // Create a guild with all channels
@@ -160,7 +160,7 @@ test("should handle case when user has no AI chat channel", async () => {
   const user = createMockUser("testuser");
   
   // Create channels that are not related to this user's AI chat
-  const otherUserChannel = createMockTextChannel("ai-chat-otheruser-1234567890-efgh", "other-user-channel-id");
+  const otherUserChannel = createMockTextChannel("ai-chat-1234567890-otheruser-efgh", "other-user-channel-id");
   const generalChannel = createMockTextChannel("general", "general-channel-id");
   
   // Create a guild with unrelated channels
@@ -182,7 +182,7 @@ test("should delete the channel when /end-ai-chat is issued from within a privat
   const user = createMockUser("testuser");
   
   // Create a private AI chat channel
-  const privateChannel = createMockTextChannel("ai-chat-testuser-1234567890-abcd", "private-channel-id");
+  const privateChannel = createMockTextChannel("ai-chat-1234567890-testuser-abcd", "private-channel-id");
   
   // Create a guild with the private channel
   const guild: any = createMockGuild([privateChannel]);
@@ -215,7 +215,7 @@ test("should handle case when channel deletion fails", async () => {
   const user = createMockUser("testuser");
   
   // Create a private AI chat channel
-  const privateChannel = createMockTextChannel("ai-chat-testuser-1234567890-abcd", "private-channel-id");
+  const privateChannel = createMockTextChannel("ai-chat-1234567890-testuser-abcd", "private-channel-id");
   
   // Create a guild with the private channel
   const guild: any = createMockGuild([privateChannel]);

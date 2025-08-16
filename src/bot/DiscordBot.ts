@@ -5,6 +5,7 @@ import { PersonalityCommand } from "../commands/PersonalityCommand";
 import type { MessageHistoryItem } from "../utils/ConversationHistory";
 import {ConversationHistory} from "../utils/ConversationHistory";
 import { AIService } from "../services/AIService";
+import { ChannelSummarizer } from "../services/ChannelSummarizer";
 
 // Types for the mock
 type MockAIService = {
@@ -17,6 +18,7 @@ export class DiscordBot {
   private channelManager: ChannelManager;
   private personalityCommand: PersonalityCommand;
   private aiService: AIService | MockAIService;
+  private channelSummarizer: ChannelSummarizer;
   private client: Client | null = null;
 
   constructor(dbPath?: string, mockAIService?: MockAIService) {
@@ -36,6 +38,14 @@ export class DiscordBot {
       
       this.aiService = new AIService({ apiKey });
     }
+    
+    // Initialize ChannelSummarizer with OpenRouter API key from environment
+    const summarizerApiKey = process.env.OPENROUTER_API_KEY;
+    if (!summarizerApiKey) {
+      throw new Error("OPENROUTER_API_KEY environment variable is required for ChannelSummarizer");
+    }
+    
+    this.channelSummarizer = new ChannelSummarizer({ apiKey: summarizerApiKey });
   }
 
   // Initialize the bot (would connect to Discord in a real implementation)
@@ -139,6 +149,25 @@ export class DiscordBot {
       // Clear typing interval when done (success or error)
       if (typingInterval) {
         clearInterval(typingInterval);
+      }
+    }
+    
+    // Check if we should rename the channel (after 5 messages exchanged)
+    if (channel && this.channelManager.isPrivateChatChannel(channel.name)) {
+      try {
+        // Fetch message count
+        const messages = await channel.messages.fetch({ limit: 10 });
+        const userMessages = messages.filter(msg => !msg.author.bot || msg.author.id === this.client?.user?.id);
+        
+        // Rename channel after every 2 messages
+        if (userMessages.size >= 2 && (userMessages.size - 2) % 4 === 0) {
+          // Check if the channel name already contains a summary (to avoid renaming multiple times)
+          if (!channel.name.includes("-ai-discussion-") && !channel.name.includes("-chat-summary-")) {
+            await this.channelManager.renameChannelWithSummary(channel, this.channelSummarizer);
+          }
+        }
+      } catch (error) {
+        console.error(`Failed to check for channel renaming:`, error);
       }
     }
     

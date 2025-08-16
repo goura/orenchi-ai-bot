@@ -1,6 +1,9 @@
 import { ChannelType, Guild, PermissionsBitField, TextChannel, User } from "discord.js";
+import type { MessageHistoryItem } from "../utils/ConversationHistory";
+import { ChannelSummarizer } from "../services/ChannelSummarizer";
 
 export class ChannelManager {
+  static readonly WELCOME_MESSAGE_SUFFIX = "You can customize my personality with the /personality command.";
   private readonly channelPrefix: string = "ai-chat-";
   private readonly inactivityThreshold: number; // in milliseconds
 
@@ -25,7 +28,7 @@ export class ChannelManager {
       randomStr += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     
-    return `${this.channelPrefix}${safeUsername}-${timestamp}-${randomStr}`;
+    return `${this.channelPrefix}${timestamp}-${safeUsername}-${randomStr}`;
   }
 
   isPrivateChatChannel(channelName: string): boolean {
@@ -95,7 +98,7 @@ export class ChannelManager {
     } else {
       // If no original message, include the full welcome message
       const userMentions = users.map(user => `<@${user.id}>`).join(', ');
-      const welcomeMessage = `Hello ${userMentions}! This is your private chat channel with the AI assistant. You can customize my personality with the /personality command.`;
+      const welcomeMessage = `Hello ${userMentions}! This is your private chat channel with the AI assistant. ${ChannelManager.WELCOME_MESSAGE_SUFFIX}`;
       await channel.send(welcomeMessage);
     }
     
@@ -153,6 +156,47 @@ export class ChannelManager {
       if (await this.isChannelInactive(channel)) {
         await this.deletePrivateChannel(channel);
       }
+    }
+  }
+
+  /**
+   * Rename a channel with a summary of the conversation
+   */
+  async renameChannelWithSummary(channel: TextChannel, summarizer: ChannelSummarizer): Promise<string> {
+    try {
+      // Fetch the message history from the channel
+      const messages = await channel.messages.fetch({ limit: 10 });
+      const historyItems: MessageHistoryItem[] = messages
+        .filter(msg => !msg.author.bot || msg.author.id === channel.client.user?.id)
+        .map(msg => ({
+          role: msg.author.id === channel.client.user?.id ? "assistant" as const : "user" as const,
+          content: msg.content
+        }))
+        .reverse(); // Reverse to get chronological order
+      
+      // Generate summary using the summarizer
+      const summary = await summarizer.summarizeConversation(historyItems);
+      
+      // Generate a new channel name with the summary
+      // Format: ai-chat-{timestamp}-{summarized_title}-{random}
+      const timestamp = Math.floor(Date.now() / 1000);
+      
+      // Generate 4 random characters
+      const chars = 'abcdfghijklmnopqrstuvwxyzABCDFGHIJKLMNPQRSTUVWXYZ0123456789';
+      let randomStr = '';
+      for (let i = 0; i < 4; i++) {
+        randomStr += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      
+      const newChannelName = `ai-chat-${timestamp}-${summary}-${randomStr}`;
+      console.log(`Renaming channel ${channel.name} to ${newChannelName}`);
+      
+      // Rename the channel
+      await channel.setName(newChannelName);
+      return newChannelName;
+    } catch (error) {
+      console.error(`Failed to rename channel ${channel.name} with summary:`, error);
+      throw error;
     }
   }
 }

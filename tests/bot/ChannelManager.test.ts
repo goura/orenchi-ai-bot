@@ -60,16 +60,16 @@ test("should generate correct channel name", () => {
   const manager = new ChannelManager();
   
   const channelName = manager.generateChannelName("testuser");
-  // New format: ai-chat-{username}-{timestamp}-{random}
-  expect(channelName).toMatch(/^ai-chat-testuser-\d{10}-[a-zA-Z0-9]{4}$/);
+  // New format: ai-chat-{unixtime}-{user}-{random}
+  expect(channelName).toMatch(/^ai-chat-\d{10}-testuser-[a-zA-Z0-9]{4}$/);
 });
 
 test("should sanitize usernames with invalid characters", () => {
   const manager = new ChannelManager();
   
   const channelName = manager.generateChannelName("test.user@domain");
-  // New format: ai-chat-{sanitized-username}-{timestamp}-{random}
-  expect(channelName).toMatch(/^ai-chat-test-user--\d{10}-[a-zA-Z0-9]{4}$/);
+  // New format: ai-chat-{unixtime}-{user}-{random}
+  expect(channelName).toMatch(/^ai-chat-\d{10}-test-user--[a-zA-Z0-9]{4}$/);
 });
 
 test("should identify private chat channels", () => {
@@ -86,8 +86,8 @@ test("should create private channel", async () => {
   const user = { id: "user-id", username: "testuser" };
   
   const channel = await manager.createPrivateChannel(guild as any, [user as any]);
-  // New format: ai-chat-{username}-{timestamp}-{random}
-  expect(channel.name).toMatch(/^ai-chat-testuser-\d{10}-[a-zA-Z0-9]{4}$/);
+  // New format: ai-chat-{unixtime}-{user}-{random}
+  expect(channel.name).toMatch(/^ai-chat-\d{10}-testuser-[a-zA-Z0-9]{4}$/);
 });
 
 test("should always create a new channel even if one exists", async () => {
@@ -128,7 +128,7 @@ test("should handle delete channel errors gracefully", async () => {
 
 test("should detect inactive channels with no messages", async () => {
   const manager = new ChannelManager(1); // 1 hour threshold
-  const channel = createMockTextChannel("ai-chat-testuser", 2 * 60 * 60 * 1000); // 2 hours old
+  const channel = createMockTextChannel("ai-chat-1234567890-testuser-abcd", 2 * 60 * 60 * 1000); // 2 hours old
   
   const result = await manager.isChannelInactive(channel as any);
   expect(result).toBe(true);
@@ -136,7 +136,7 @@ test("should detect inactive channels with no messages", async () => {
 
 test("should detect active channels with recent creation", async () => {
   const manager = new ChannelManager(24); // 24 hour threshold
-  const channel = createMockTextChannel("ai-chat-testuser", 12 * 60 * 60 * 1000); // 12 hours old
+  const channel = createMockTextChannel("ai-chat-1234567890-testuser-abcd", 12 * 60 * 60 * 1000); // 12 hours old
   
   const result = await manager.isChannelInactive(channel as any);
   expect(result).toBe(false);
@@ -144,7 +144,7 @@ test("should detect active channels with recent creation", async () => {
 
 test("should handle channel inactivity check errors gracefully", async () => {
   const manager = new ChannelManager();
-  const channel = createMockTextChannel("ai-chat-testuser");
+  const channel = createMockTextChannel("ai-chat-1234567890-testuser-abcd");
   
   // Make messages.fetch throw an error
   channel.messages.fetch = () => Promise.reject(new Error("Fetch failed"));

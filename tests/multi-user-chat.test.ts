@@ -70,7 +70,7 @@ test("should create private channel with multiple users", async () => {
   const channel = await manager.createPrivateChannel(guild as any, [user1 as any, user2 as any, user3 as any], "bot-id");
   
   // Check that the channel was created with the correct name (based on first user)
-  expect(channel.name).toMatch(/^ai-chat-user1-\d{10}-[a-zA-Z0-9]{4}$/);
+  expect(channel.name).toMatch(/^ai-chat-\d{10}-user1-[a-zA-Z0-9]{4}$/);
   
   // The test passes if no errors were thrown during channel creation
   expect(channel).toBeDefined();
@@ -84,7 +84,7 @@ test("should create private channel with single user (backward compatibility)", 
   const channel = await manager.createPrivateChannel(guild as any, [user as any], "bot-id");
   
   // Check that the channel was created with the correct name
-  expect(channel.name).toMatch(/^ai-chat-testuser-\d{10}-[a-zA-Z0-9]{4}$/);
+  expect(channel.name).toMatch(/^ai-chat-\d{10}-testuser-[a-zA-Z0-9]{4}$/);
   
   // The test passes if no errors were thrown during channel creation
   expect(channel).toBeDefined();
