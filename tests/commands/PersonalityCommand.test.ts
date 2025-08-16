@@ -55,3 +55,15 @@ test("should handle empty personality text", async () => {
   const storedPersonality = command.getPersonality(userId);
   expect(storedPersonality).toBe(personality);
 });
+
+test("should return current personality when no text is provided", async () => {
+  const userId = "test-user";
+  const personality = "You are a helpful assistant";
+  
+  // Set a personality first
+  await command.handle(userId, personality);
+  
+  // Test the getPersonality method directly
+  const result = command.getPersonality(userId);
+  expect(result).toBe(personality);
+});

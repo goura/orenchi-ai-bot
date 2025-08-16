@@ -20,31 +20,18 @@ describe("AIService", () => {
     aiService = new AIService({ apiKey: "test-key" });
     // Override the client with our mock for testing
     (aiService as any).client = mockClient;
+    // Mock the webSearchService
+    (aiService as any).webSearchService = {
+      shouldSearch: jest.fn().mockResolvedValue({ type: "none" })
+    };
   });
 
   afterEach(() => {
     jest.clearAllMocks();
   });
 
-  test("should select appropriate model based on message length", () => {
-    // Test short message
-    const shortMessage = "Hello";
-    const shortModel = (aiService as any).selectModel(shortMessage);
-    expect(shortModel).toBe("openai/gpt-5-chat:online");
-    
-    // Test medium message with 100+ words
-    const mediumMessage = "word ".repeat(150); // 150 words
-    const mediumModel = (aiService as any).selectModel(mediumMessage);
-    expect(mediumModel).toBe("openrouter/auto:online");
-    
-    // Test long message with 500+ words
-    const longMessage = "word ".repeat(600); // 600 words
-    const longModel = (aiService as any).selectModel(longMessage);
-    expect(longModel).toBe("openai/gpt-5:online");
-  });
-  
   test("should process image", async () => {
-    const imageRecognitionModel = "openrouter/gemini-2.5-flash:online";
+    const imageRecognitionModel = "openrouter/gemini-2.5-flash";
     const mockResponse = {
       choices: [{
         message: {
@@ -112,7 +99,7 @@ describe("AIService", () => {
     
     expect(response).toBe("Mock AI response with personality");
     expect(mockClient.chat.completions.create).toHaveBeenCalledWith({
-      model: "openai/gpt-5-chat:online",
+      model: "openai/gpt-4o",
       messages: [
         { role: "system" as const, content: personality },
         { role: "user" as const, content: "Hello" }
@@ -139,7 +126,7 @@ describe("AIService", () => {
     
     expect(response).toBe("Mock AI response");
     expect(mockClient.chat.completions.create).toHaveBeenCalledWith({
-      model: "openai/gpt-5-chat:online",
+      model: "openai/gpt-4o",
       messages: [
         { role: "user" as const, content: "Hello" }
       ],
@@ -149,6 +136,9 @@ describe("AIService", () => {
   });
 
   test("should handle API errors gracefully", async () => {
+    // Mock webSearchService to return none
+    (aiService as any).webSearchService.shouldSearch.mockResolvedValue({ type: "none" });
+    
     mockClient.chat.completions.create.mockRejectedValue(new Error("API Error"));
 
     const messages = [{ role: "user" as const, content: "Hello" }];
@@ -172,48 +162,4 @@ describe("AIService", () => {
     expect(response).toBe("I'm not sure how to respond to that.");
   });
 
-  test("should select different models based on message length", async () => {
-    const mockResponse = {
-      choices: [{
-        message: {
-          content: "Mock response"
-        }
-      }]
-    };
-
-    mockClient.chat.completions.create.mockResolvedValue(mockResponse);
-
-    // Test with short message
-    const shortMessages = [{ role: "user" as const, content: "Short message" }];
-    await aiService.generateResponse(shortMessages);
-    expect(mockClient.chat.completions.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        model: "openai/gpt-5-chat:online"
-      })
-    );
-
-    // Reset mock
-    mockClient.chat.completions.create.mockClear();
-
-    // Test with medium message
-    const mediumMessages = [{ role: "user" as const, content: "word ".repeat(150) }];
-    await aiService.generateResponse(mediumMessages);
-    expect(mockClient.chat.completions.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        model: "openrouter/auto:online"
-      })
-    );
-
-    // Reset mock
-    mockClient.chat.completions.create.mockClear();
-
-    // Test with long message
-    const longMessages = [{ role: "user" as const, content: "word ".repeat(600) }];
-    await aiService.generateResponse(longMessages);
-    expect(mockClient.chat.completions.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        model: "openai/gpt-5:online"
-      })
-    );
-  });
 });

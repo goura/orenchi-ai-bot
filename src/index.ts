@@ -45,13 +45,13 @@ client.on(Events.InteractionCreate, async (interaction: Interaction) => {
   console.log(`Received command: ${interaction.commandName} from user: ${interaction.user.tag}`);
 
   if (interaction.commandName === "personality") {
-    const personalityText = interaction.options.getString("text", true);
-    console.log(`Setting personality for user: ${interaction.user.tag}`);
+    const personalityText = interaction.options.getString("text", false);
+    console.log(`Handling personality command for user: ${interaction.user.tag}`);
     const response = await bot.handlePersonalityCommand(interaction.user.id, personalityText);
     
     // Send ephemeral response
     await interaction.reply({ content: response, ephemeral: true });
-    console.log(`Personality set for user: ${interaction.user.tag}`);
+    console.log(`Personality command handled for user: ${interaction.user.tag}`);
   } else if (interaction.commandName === "start-ai-chat") {
     // Handle start-ai-chat command
     if (!interaction.guild) {
@@ -171,14 +171,14 @@ client.on(Events.MessageCreate, async (message: Message) => {
         );
       }
       
-      // Generate and send AI response to the original question in the new private channel
+      // Generate and send a simple response to the new private channel without web search
       // Do this asynchronously without waiting to avoid delaying the public response
-      // Use the first user's ID for the AI response (the message author)
-      bot.handleMessage(message.author.id, message.content, channel, [])
+      bot.generateFirstMessageResponse(message.author.id, message.content)
         .then(response => channel.send(response))
         .catch(error => {
-          console.error("Error sending AI response to private channel:", error);
-          channel.send("Sorry, I encountered an error while processing your request.");
+          console.error("Error sending first message response to private channel:", error);
+          // Send a fallback message
+          channel.send("Hello! I've moved our conversation to this private channel. How can I help you today?");
         });
       
       console.log(`Created private channel for ${message.author.tag}: ${channel.name}`);

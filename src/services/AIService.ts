@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import type { MessageHistoryItem } from "../utils/ConversationHistory";
+import { WebSearchService } from "./WebSearchService";
 
 export interface AIServiceConfig {
   apiKey: string;
@@ -8,8 +9,9 @@ export interface AIServiceConfig {
 
 export class AIService {
   private client: OpenAI;
-  private defaultModel: string = "openrouter/auto:online";
-  private imageRecognitionModel: string = "openrouter/gemini-2.5-flash:online";
+  private webSearchService: WebSearchService;
+  private defaultModel: string = "openai/gpt-4o";
+  private imageRecognitionModel: string = "openrouter/gemini-2.5-flash";
   private maxTokens: number = 100000;
 
   // Expose maxTokens for testing purposes
@@ -25,32 +27,17 @@ export class AIService {
         "X-Title": "orenchi-ai-bot"
       }
     });
+    this.webSearchService = new WebSearchService(config);
   }
 
-  /**
-   * Select the most appropriate model based on message length
-   */
-  private selectModel(message: string): string {
-    const tokenEstimate = message.split(' ').length;
-    
-    if (tokenEstimate < 100) {
-      // Lightweight model for short messages
-      return "openai/gpt-5-chat:online";
-    } else if (tokenEstimate < 500) {
-      // Balanced model for medium messages
-      return this.defaultModel;
-    } else {
-      // Powerful model for long messages
-      return "openai/gpt-5:online";
-    }
-  }
 
   /**
    * Generate a response from the AI model
    */
   async generateResponse(
     messages: MessageHistoryItem[],
-    personality?: string | null
+    personality?: string | null,
+    searchIfNeeded: boolean = true
   ): Promise<string> {
     try {
       console.log(`Generating AI response with ${messages.length} history items`);
@@ -69,11 +56,22 @@ export class AIService {
         ? [{ role: "system" as const, content: personality }]
         : [];
 
-      // Get the last user message to determine model selection
-      const lastUserMessage = messages.filter(m => m.role === "user").pop();
-      const model = lastUserMessage 
-        ? this.selectModel(lastUserMessage.content) 
-        : this.defaultModel;
+      // Use the default model for all requests
+      let model = this.defaultModel;
+
+      let finalMessages = [ ...conversationHistory ];
+
+      // Use the full conversation history for web search decision, if needed
+      if (searchIfNeeded) {
+        const searchResult = await this.webSearchService.shouldSearch(conversationHistory);
+        if (searchResult.type === "sonar") {
+          model = "perplexity/sonar";  // "perplexity/sonar" is correct, don't fix this
+          console.log("Using Sonar for web search.");
+        } else if (searchResult.type === "search") {
+        model = "openai/gpt-4o:online";
+        console.log("Using web search with GPT-4o.");
+        }
+      }
       
       console.log(`Selected model: ${model}`);
 

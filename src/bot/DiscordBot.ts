@@ -146,7 +146,18 @@ export class DiscordBot {
   }
 
   // Handle the /personality command
-  async handlePersonalityCommand(userId: string, personalityText: string): Promise<string> {
+  async handlePersonalityCommand(userId: string, personalityText?: string | null): Promise<string> {
+    // If no personality text is provided, return the current personality with a help message
+    if (!personalityText) {
+      const currentPersonality = this.personalityCommand.getPersonality(userId);
+      if (currentPersonality) {
+        return `Current personality: ${currentPersonality}\n\nTo set a new personality, use: /personality <personality text>`;
+      } else {
+        return "No personality set. To set a personality, use: /personality <personality text>";
+      }
+    }
+    
+    // If personality text is provided, set it
     return await this.personalityCommand.handle(userId, personalityText);
   }
 
@@ -199,7 +210,7 @@ export class DiscordBot {
   // Generate a varied response for public channel notifications
   async generatePublicResponse(userId: string, userMessage: string, channelMention: string): Promise<string> {
     // Create system prompt for generating varied responses
-    const systemPrompt = "You are a helpful AI assistant. Generate exactly one short, friendly one-line response indicating we're moving to a private channel. Keep it concise and varied. Only provide one response.";
+    const systemPrompt = "Generate a friendly one-line response indicating we're moving to a private channel in the language the user used, in a tone of who you are supposed to be. Keep it concise. Only provide one response.";
     
     // Create user prompt with the original message for language detection
     const userPrompt = `${userMessage.substring(0, 100)}${userMessage.length > 100 ? '...' : ''}`;
@@ -209,8 +220,41 @@ export class DiscordBot {
     ];
     
     // Generate response using the AI service with system prompt as personality
-    const response = await this.aiService.generateResponse(historyItems, systemPrompt);
+    const response = await this.aiService.generateResponse(historyItems, systemPrompt, false);
     return response;
+  }
+  
+  // Generate a response for the first message in a private channel
+  // This response is generated with personality and with web search enabled
+  async generateFirstMessageResponse(userId: string, originalMessage: string): Promise<string> {
+    console.log(`Generating first message response for user ${userId} with original message: ${originalMessage.substring(0, 50)}${originalMessage.length > 50 ? '...' : ''}`);
+    
+    // Get user's personality if it exists
+    const personality = this.personalityCommand.getPersonality(userId);
+    if (personality) {
+      console.log(`Using personality for user ${userId}: ${personality.substring(0, 50)}${personality.length > 50 ? '...' : ''}`);
+    }
+    
+    // Create a system prompt that tells the AI to generate a friendly response
+    // that respects the user's personality
+    const systemPrompt = `Generate a friendly, natural response in the language as the user's message, in a tone of who you are supposed to be. Keep it concise but not necessarily limited to one line. Only provide one response.`;
+    
+    // Create a history with just the original message
+    const historyItems = [
+      { role: "user" as const, content: originalMessage }
+    ];
+    
+    // Generate response using the AI service with the system prompt as personality
+    // This approach ensures we don't do web search but still respect personality
+    try {
+      const response = await this.aiService.generateResponse(historyItems, systemPrompt, true);
+      console.log(`Generated first message response: ${response.substring(0, 50)}${response.length > 50 ? '...' : ''}`);
+      return response;
+    } catch (error) {
+      console.error("Error generating first message response:", error);
+      // Fallback to a simple response
+      return "Hello! I've moved our conversation to this private channel. How can I help you today?";
+    }
   }
   
   // Shutdown the bot and cleanup resources
