@@ -133,6 +133,7 @@ Common errors:
 2. Set up environment variables:
    - `DISCORD_BOT_TOKEN` - Your Discord bot token
    - `OPENROUTER_API_KEY` - Your OpenRouter API key
+   - `RESPOND_TO_PUBLIC_NO_MENTION` (optional) - Set to `true` to enable the bot to process messages with no mentions in public channels. Defaults to `false`.
 
 3. Discord OAuth2 Setup:
    When setting up OAuth2 for your Discord bot, you need to configure the proper scopes and permissions.

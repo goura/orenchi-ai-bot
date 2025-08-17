@@ -132,6 +132,24 @@ function isMessageDirectedToOthers(message: Message, botUserId: string): boolean
   return true;
 }
 
+// Helper function to check if bot should process a message in public channels
+function shouldBotProcessMessage(message: Message, botUserId: string): boolean {
+  // If the bot is explicitly mentioned, always process
+  if (message.mentions.has(botUserId)) {
+    return true;
+  }
+  
+  // If there are no mentions, check the environment variable
+  if (message.mentions.users.size === 0) {
+    // Check if RESPOND_TO_PUBLIC_NO_MENTION is set to true
+    const respondToPublicNoMention = process.env.RESPOND_TO_PUBLIC_NO_MENTION === 'true';
+    return respondToPublicNoMention;
+  }
+  
+  // If there are mentions but the bot is not mentioned, don't process
+  return false;
+}
+
 // Handle messages
 client.on(Events.MessageCreate, async (message: Message) => {
   // Ignore bot messages
@@ -171,7 +189,7 @@ client.on(Events.MessageCreate, async (message: Message) => {
     }
   }
   // Handle mentions in public channels
-  else if (message.mentions.has(client.user!.id)) {
+  else if (shouldBotProcessMessage(message, client.user!.id)) {
     console.log(`Bot mentioned in public channel: ${(message.channel as any).name || 'unknown channel'}`);
     // Create private channel and move conversation there
     if (!message.guild) return;
