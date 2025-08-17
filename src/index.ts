@@ -112,6 +112,26 @@ client.on(Events.InteractionCreate, async (interaction: Interaction) => {
   }
 });
 
+// Helper function to check if a message is explicitly directed to others (not including the bot)
+function isMessageDirectedToOthers(message: Message, botUserId: string): boolean {
+  // If there are no mentions, the message is not directed to anyone specifically
+  if (message.mentions.users.size === 0) {
+    return false;
+  }
+  
+  // Check if all mentions are to users other than the bot
+  const mentionedUsers = message.mentions.users;
+  for (const [userId, user] of mentionedUsers) {
+    if (userId === botUserId) {
+      // If the bot is mentioned, the message is directed to the bot
+      return false;
+    }
+  }
+  
+  // If we get here, all mentions are to users other than the bot
+  return true;
+}
+
 // Handle messages
 client.on(Events.MessageCreate, async (message: Message) => {
   // Ignore bot messages
@@ -120,8 +140,14 @@ client.on(Events.MessageCreate, async (message: Message) => {
   console.log(`Received message from ${message.author.tag} in ${message.channel.type === ChannelType.GuildText ? message.channel.name : 'DM'}: ${message.content}`);
 
   // Check if this is a private chat channel
-  if (message.channel.type === ChannelType.GuildText && 
+  if (message.channel.type === ChannelType.GuildText &&
       channelManager.isPrivateChatChannel(message.channel.name)) {
+    // Check if the message is explicitly directed to others (not including the bot)
+    if (isMessageDirectedToOthers(message, client.user!.id)) {
+      console.log(`Message in private channel ${message.channel.name} is directed to others, ignoring`);
+      return; // Ignore the message
+    }
+    
     // Handle messages in private chat channels
     console.log(`Processing message in private channel: ${message.channel.name}`);
     try {
@@ -132,8 +158,8 @@ client.on(Events.MessageCreate, async (message: Message) => {
       }));
       
       const response = await bot.handleMessage(
-        message.author.id, 
-        message.content, 
+        message.author.id,
+        message.content,
         message.channel,
         attachments
       );
