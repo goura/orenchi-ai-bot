@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Test on Ubuntu
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Run tests
+        run: bun test
+        env:
+          DISCORD_BOT_TOKEN: dummy_token_for_ci
+          OPENROUTER_API_KEY: dummy_key_for_ci
+          DISCORD_CLIENT_ID: 012345678901234567
+          DISCORD_GUILD_ID: 987654321098765432
+          RESPOND_TO_PUBLIC_NO_MENTION: true
