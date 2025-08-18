@@ -162,4 +162,31 @@ describe("AIService", () => {
     expect(response).toBe("I'm not sure how to respond to that.");
   });
 
+  test("should use perplexity/sonar-pro model when webSearchService returns sonar-pro", async () => {
+    const mockResponse = {
+      choices: [{
+        message: {
+          content: "Mock AI response with sonar-pro"
+        }
+      }]
+    };
+
+    mockClient.chat.completions.create.mockResolvedValue(mockResponse);
+    // Mock webSearchService to return sonar-pro
+    (aiService as any).webSearchService.shouldSearch.mockResolvedValue({ type: "sonar-pro", query: "deep analysis" });
+
+    const messages = [{ role: "user" as const, content: "Hello" }];
+    
+    const response = await aiService.generateResponse(messages, null, true);
+    
+    expect(response).toBe("Mock AI response with sonar-pro");
+    expect(mockClient.chat.completions.create).toHaveBeenCalledWith({
+      model: "perplexity/sonar-pro",
+      messages: [
+        { role: "user" as const, content: "Hello" }
+      ],
+      temperature: 0.7,
+      max_tokens: (aiService as any).getMaxTokens()
+    });
+  });
 });

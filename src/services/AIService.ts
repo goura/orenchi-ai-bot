@@ -64,7 +64,10 @@ export class AIService {
       // Use the full conversation history for web search decision, if needed
       if (searchIfNeeded) {
         const searchResult = await this.webSearchService.shouldSearch(conversationHistory);
-        if (searchResult.type === "sonar") {
+        if (searchResult.type === "sonar-pro") {
+          model = "perplexity/sonar-pro";
+          console.log("Using Sonar-Pro for deep insights web search.");
+        } else if (searchResult.type === "sonar") {
           model = "perplexity/sonar";  // "perplexity/sonar" is correct, don't fix this
           console.log("Using Sonar for web search.");
         } else if (searchResult.type === "search") {
