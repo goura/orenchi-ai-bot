@@ -45,12 +45,11 @@ export class WebSearchService {
 
     try {
       const response = await this.client.chat.completions.create({
-        model: "openai/gpt-4o-mini",
+        model: "openai/gpt-5-nano",
         messages: [
           { role: "system", content: prompt }
         ],
-        temperature: 0.1,
-        max_tokens: 100,
+        max_tokens: 2000,
         response_format: { type: "json_object" }
       });
 

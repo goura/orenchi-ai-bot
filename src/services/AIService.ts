@@ -21,22 +21,106 @@ export class AIService {
 
   /**
    * Process citations from Perplexity Sonar API response and format them as Discord-friendly links
+   *
+   * NOTE: The actual format returned by Perplexity Sonar-Pro is different from what is documented.
+   * Instead of a top-level "search_results" array, citations are found in:
+   * response.choices[0].message.annotations
+   *
+   * Each annotation has the structure:
+   * {
+   *   "type": "url_citation",
+   *   "url_citation": {
+   *     "title": "Page Title",
+   *     "url": "https://example.com"
+   *   }
+   * }
    */
   private processCitations(response: any): string {
-    // Check if the response has search_results (Perplexity Sonar format)
-    if (response.search_results && Array.isArray(response.search_results) && response.search_results.length > 0) {
-      const citations = response.search_results.map((result: any, index: number) => {
-        const title = result.title || `Source ${index + 1}`;
-        const url = result.url || '';
-        return `[${index + 1}] [${title}](${url})`;
-      });
+    // Log the response structure for debugging
+    console.log("Processing citations from response. Full response:", JSON.stringify(response, null, 2));
+    
+    // Check if the response has search_results (Perplexity Sonar format - documented but differs from the actual response)
+    if (response.search_results) {
+      console.log("Response has search_results property. Type:", typeof response.search_results);
+      if (Array.isArray(response.search_results)) {
+        console.log("search_results is an array with length:", response.search_results.length);
+        if (response.search_results.length > 0) {
+          // Log the structure of the first citation to understand the format
+          console.log("First citation structure:", JSON.stringify(response.search_results[0], null, 2));
+          
+          const citations = response.search_results.map((result: any, index: number) => {
+            const title = result.title || `Source ${index + 1}`;
+            const url = result.url || '';
+            return `[${index + 1}] [${title}](${url})`;
+          });
+          
+          if (citations.length > 0) {
+            const citationsText = `\n\n${citations.join('\n')}`;
+            console.log("Generated citations:", citationsText);
+            return citationsText;
+          }
+        } else {
+          console.log("search_results array is empty");
+        }
+      } else {
+        console.log("search_results is not an array. Actual type:", typeof response.search_results);
+        console.log("search_results value:", response.search_results);
+      }
+    }
+    // Check if the response has annotations (Perplexity Sonar/Pro actual format)
+    else if (response.choices && response.choices[0] && response.choices[0].message && response.choices[0].message.annotations) {
+      console.log("Response has annotations property (Perplexity Sonar/Pro format)");
+      const annotations = response.choices[0].message.annotations;
       
-      if (citations.length > 0) {
-        return `\n\n${citations.join('\n')}`;
+      if (Array.isArray(annotations)) {
+        console.log("annotations is an array with length:", annotations.length);
+        if (annotations.length > 0) {
+          // Log the structure of the first annotation to understand the format
+          console.log("First annotation structure:", JSON.stringify(annotations[0], null, 2));
+          
+          // Process annotations that are url_citations
+          const urlCitations = annotations.filter((annotation: any) =>
+            annotation.type === "url_citation" && annotation.url_citation
+          );
+          
+          if (urlCitations.length > 0) {
+            const citations = urlCitations.map((annotation: any, index: number) => {
+              const urlCitation = annotation.url_citation;
+              const title = urlCitation.title || `Source ${index + 1}`;
+              const url = urlCitation.url || '';
+              return `[${index + 1}] [${title}](${url})`;
+            });
+            
+            if (citations.length > 0) {
+              const citationsText = `\n\n${citations.join('\n')}`;
+              console.log("Generated citations from annotations:", citationsText);
+              return citationsText;
+            }
+          } else {
+            console.log("No url_citation annotations found");
+          }
+        } else {
+          console.log("annotations array is empty");
+        }
+      } else {
+        console.log("annotations is not an array. Actual type:", typeof annotations);
+        console.log("annotations value:", annotations);
+      }
+    } else {
+      console.log("Response does not have search_results or annotations property");
+      // Log all properties of the response to see what's available
+      console.log("Response properties:", Object.keys(response));
+      // Log the choices array if it exists
+      if (response.choices) {
+        console.log("Response has choices. Logging first choice structure:");
+        if (response.choices[0]) {
+          console.log("First choice:", JSON.stringify(response.choices[0], null, 2));
+        }
       }
     }
     
-    // No citations found
+    // No citations found or processed
+    console.log("No citations found or processed in response");
     return '';
   }
 
