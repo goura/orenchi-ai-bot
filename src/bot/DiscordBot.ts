@@ -71,17 +71,28 @@ export class DiscordBot {
       }
     }
     
-    // Set up periodic typing indicator
+    // Set up more frequent typing indicators for better UX
     let typingInterval: NodeJS.Timeout | null = null;
     if (channel) {
+      // Send typing indicator immediately and then more frequently
+      let typingSentCount = 0;
+      const maxTypingIndicators = 10; // Limit to prevent infinite loops
+      
       typingInterval = setInterval(async () => {
         try {
+          // Stop sending typing indicators after a reasonable number to prevent spam
+          if (typingSentCount >= maxTypingIndicators) {
+            if (typingInterval) clearInterval(typingInterval);
+            return;
+          }
+          
           await channel.sendTyping();
+          typingSentCount++;
         } catch (error) {
           console.error("Failed to send typing indicator:", error);
           if (typingInterval) clearInterval(typingInterval);
         }
-      }, 8000); // Send typing indicator every 8 seconds (before the 10-second timeout)
+      }, 5000); // Send typing indicator every 5 seconds for smoother experience
     }
     
     // Get user's personality if it exists
@@ -168,6 +179,16 @@ export class DiscordBot {
         }
       } catch (error) {
         console.error(`Failed to check for channel renaming:`, error);
+      }
+    }
+    
+    // Send one final typing indicator right before sending the message
+    // This ensures the typing indicator is active when the message appears
+    if (channel) {
+      try {
+        await channel.sendTyping();
+      } catch (error) {
+        console.error("Failed to send final typing indicator:", error);
       }
     }
     
