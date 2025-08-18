@@ -19,6 +19,27 @@ export class AIService {
     return this.maxTokens;
   }
 
+  /**
+   * Process citations from Perplexity Sonar API response and format them as Discord-friendly links
+   */
+  private processCitations(response: any): string {
+    // Check if the response has search_results (Perplexity Sonar format)
+    if (response.search_results && Array.isArray(response.search_results) && response.search_results.length > 0) {
+      const citations = response.search_results.map((result: any, index: number) => {
+        const title = result.title || `Source ${index + 1}`;
+        const url = result.url || '';
+        return `[${index + 1}] [${title}](${url})`;
+      });
+      
+      if (citations.length > 0) {
+        return `\n\n${citations.join('\n')}`;
+      }
+    }
+    
+    // No citations found
+    return '';
+  }
+
   constructor(config: AIServiceConfig) {
     this.client = new OpenAI({
       apiKey: config.apiKey,
@@ -121,7 +142,15 @@ export class AIService {
 
       const content = response.choices[0]?.message?.content;
       console.log(`Received response from OpenRouter API: ${content?.substring(0, 50)}${content && content.length > 50 ? '...' : ''}`);
-      return content || "I'm not sure how to respond to that.";
+      
+      // Process citations only for Perplexity Sonar models
+      let finalContent = content || "I'm not sure how to respond to that.";
+      if ((model === "perplexity/sonar" || model === "perplexity/sonar-pro") && content) {
+        const citations = this.processCitations(response);
+        finalContent = content + citations;
+      }
+      
+      return finalContent;
     } catch (error) {
       console.error("Error calling OpenRouter API:", error);
       return "Sorry, I encountered an error while processing your request.";
