@@ -20,8 +20,8 @@ jobs:
       - name: Install dependencies
         run: bun install
 
-      - name: Run tests
-        run: bun test
+      - name: Run tests with coverage
+        run: bun test --coverage
         env:
           DISCORD_BOT_TOKEN: dummy_token_for_ci
           OPENROUTER_API_KEY: dummy_key_for_ci
