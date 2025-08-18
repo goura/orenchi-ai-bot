@@ -7,4 +7,5 @@ build
 crush.json
 .cursor
 personalities.db
+coverage/
 
