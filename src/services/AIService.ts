@@ -30,6 +30,33 @@ export class AIService {
     this.webSearchService = new WebSearchService(config);
   }
 
+  /**
+   * Create a chat completion with model-specific options
+   */
+  private async createChatCompletion(params: {
+    model: string;
+    messages: any[];
+    temperature?: number;
+    max_tokens?: number;
+  }) {
+    // Models that require web_search_options
+    const webSearchModels = [
+      "gpt-4o-search-preview",
+      "gpt-4o-mini-search-preview"
+    ];
+    
+    // Check if the model requires web_search_options
+    if (webSearchModels.some(m => params.model.includes(m))) {
+      // Add web_search_options for search preview models
+      return await this.client.chat.completions.create({
+        ...params,
+        web_search_options: {}
+      });
+    } else {
+      // For other models, use the standard parameters
+      return await this.client.chat.completions.create(params);
+    }
+  }
 
   /**
    * Generate a response from the AI model
@@ -85,7 +112,7 @@ export class AIService {
       ];
 
       console.log(`Sending request to OpenRouter API with ${fullPrompt.length} messages`);
-      const response = await this.client.chat.completions.create({
+      const response = await this.createChatCompletion({
         model: model,
         messages: fullPrompt,
         temperature: 0.7,
@@ -153,7 +180,7 @@ export class AIService {
       console.log(`Sending image request to OpenRouter API with ${fullPrompt.length} messages`);
       
       // Use the image recognition model for image processing
-      const response = await this.client.chat.completions.create({
+      const response = await this.createChatCompletion({
         model: this.imageRecognitionModel,
         messages: fullPrompt,
         temperature: 0.7,

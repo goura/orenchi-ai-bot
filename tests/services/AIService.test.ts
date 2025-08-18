@@ -189,4 +189,124 @@ describe("AIService", () => {
       max_tokens: (aiService as any).getMaxTokens()
     });
   });
+
+  test("should add web_search_options for gpt-4o-search-preview model", async () => {
+    const mockResponse = {
+      choices: [{
+        message: {
+          content: "Mock AI response with web search"
+        }
+      }]
+    };
+
+    mockClient.chat.completions.create.mockResolvedValue(mockResponse);
+
+    // Call the private method directly using type assertion
+    const response = await (aiService as any).createChatCompletion({
+      model: "gpt-4o-search-preview",
+      messages: [{ role: "user" as const, content: "Hello" }],
+      temperature: 0.7,
+      max_tokens: (aiService as any).getMaxTokens()
+    });
+
+    expect(response).toBe(mockResponse);
+    expect(mockClient.chat.completions.create).toHaveBeenCalledWith({
+      model: "gpt-4o-search-preview",
+      messages: [{ role: "user" as const, content: "Hello" }],
+      temperature: 0.7,
+      max_tokens: (aiService as any).getMaxTokens(),
+      web_search_options: {}
+    });
+  });
+
+  test("should add web_search_options for gpt-4o-mini-search-preview model", async () => {
+    const mockResponse = {
+      choices: [{
+        message: {
+          content: "Mock AI response with web search"
+        }
+      }]
+    };
+
+    mockClient.chat.completions.create.mockResolvedValue(mockResponse);
+
+    // Call the private method directly using type assertion
+    const response = await (aiService as any).createChatCompletion({
+      model: "gpt-4o-mini-search-preview",
+      messages: [{ role: "user" as const, content: "Hello" }],
+      temperature: 0.7,
+      max_tokens: (aiService as any).getMaxTokens()
+    });
+
+    expect(response).toBe(mockResponse);
+    expect(mockClient.chat.completions.create).toHaveBeenCalledWith({
+      model: "gpt-4o-mini-search-preview",
+      messages: [{ role: "user" as const, content: "Hello" }],
+      temperature: 0.7,
+      max_tokens: (aiService as any).getMaxTokens(),
+      web_search_options: {}
+    });
+  });
+
+  test("should not add web_search_options for gpt-4o model", async () => {
+    const mockResponse = {
+      choices: [{
+        message: {
+          content: "Mock AI response without web search"
+        }
+      }]
+    };
+
+    mockClient.chat.completions.create.mockResolvedValue(mockResponse);
+
+    // Call the private method directly using type assertion
+    const response = await (aiService as any).createChatCompletion({
+      model: "gpt-4o",
+      messages: [{ role: "user" as const, content: "Hello" }],
+      temperature: 0.7,
+      max_tokens: (aiService as any).getMaxTokens()
+    });
+
+    expect(response).toBe(mockResponse);
+    expect(mockClient.chat.completions.create).toHaveBeenCalledWith({
+      model: "gpt-4o",
+      messages: [{ role: "user" as const, content: "Hello" }],
+      temperature: 0.7,
+      max_tokens: (aiService as any).getMaxTokens()
+    });
+    // Verify web_search_options was not added
+    const callArgs = mockClient.chat.completions.create.mock.calls[0][0];
+    expect(callArgs).not.toHaveProperty('web_search_options');
+  });
+
+  test("should not add web_search_options for gpt-4o:online model", async () => {
+    const mockResponse = {
+      choices: [{
+        message: {
+          content: "Mock AI response without web search"
+        }
+      }]
+    };
+
+    mockClient.chat.completions.create.mockResolvedValue(mockResponse);
+
+    // Call the private method directly using type assertion
+    const response = await (aiService as any).createChatCompletion({
+      model: "gpt-4o:online",
+      messages: [{ role: "user" as const, content: "Hello" }],
+      temperature: 0.7,
+      max_tokens: (aiService as any).getMaxTokens()
+    });
+
+    expect(response).toBe(mockResponse);
+    expect(mockClient.chat.completions.create).toHaveBeenCalledWith({
+      model: "gpt-4o:online",
+      messages: [{ role: "user" as const, content: "Hello" }],
+      temperature: 0.7,
+      max_tokens: (aiService as any).getMaxTokens()
+    });
+    // Verify web_search_options was not added
+    const callArgs = mockClient.chat.completions.create.mock.calls[0][0];
+    expect(callArgs).not.toHaveProperty('web_search_options');
+  });
 });
