@@ -19,6 +19,27 @@ export class AIService {
     return this.maxTokens;
   }
 
+  /**
+   * Process citations from Perplexity Sonar API response and format them as Discord-friendly links
+   */
+  private processCitations(response: any): string {
+    // Check if the response has search_results (Perplexity Sonar format)
+    if (response.search_results && Array.isArray(response.search_results) && response.search_results.length > 0) {
+      const citations = response.search_results.map((result: any, index: number) => {
+        const title = result.title || `Source ${index + 1}`;
+        const url = result.url || '';
+        return `[${index + 1}] [${title}](${url})`;
+      });
+      
+      if (citations.length > 0) {
+        return `\n\n${citations.join('\n')}`;
+      }
+    }
+    
+    // No citations found
+    return '';
+  }
+
   constructor(config: AIServiceConfig) {
     this.client = new OpenAI({
       apiKey: config.apiKey,
@@ -30,6 +51,33 @@ export class AIService {
     this.webSearchService = new WebSearchService(config);
   }
 
+  /**
+   * Create a chat completion with model-specific options
+   */
+  private async createChatCompletion(params: {
+    model: string;
+    messages: any[];
+    temperature?: number;
+    max_tokens?: number;
+  }) {
+    // Models that require web_search_options
+    const webSearchModels = [
+      "gpt-4o-search-preview",
+      "gpt-4o-mini-search-preview"
+    ];
+    
+    // Check if the model requires web_search_options
+    if (webSearchModels.some(m => params.model.includes(m))) {
+      // Add web_search_options for search preview models
+      return await this.client.chat.completions.create({
+        ...params,
+        web_search_options: {}
+      });
+    } else {
+      // For other models, use the standard parameters
+      return await this.client.chat.completions.create(params);
+    }
+  }
 
   /**
    * Generate a response from the AI model
@@ -85,7 +133,7 @@ export class AIService {
       ];
 
       console.log(`Sending request to OpenRouter API with ${fullPrompt.length} messages`);
-      const response = await this.client.chat.completions.create({
+      const response = await this.createChatCompletion({
         model: model,
         messages: fullPrompt,
         temperature: 0.7,
@@ -94,7 +142,15 @@ export class AIService {
 
       const content = response.choices[0]?.message?.content;
       console.log(`Received response from OpenRouter API: ${content?.substring(0, 50)}${content && content.length > 50 ? '...' : ''}`);
-      return content || "I'm not sure how to respond to that.";
+      
+      // Process citations only for Perplexity Sonar models
+      let finalContent = content || "I'm not sure how to respond to that.";
+      if ((model === "perplexity/sonar" || model === "perplexity/sonar-pro") && content) {
+        const citations = this.processCitations(response);
+        finalContent = content + citations;
+      }
+      
+      return finalContent;
     } catch (error) {
       console.error("Error calling OpenRouter API:", error);
       return "Sorry, I encountered an error while processing your request.";
@@ -153,7 +209,7 @@ export class AIService {
       console.log(`Sending image request to OpenRouter API with ${fullPrompt.length} messages`);
       
       // Use the image recognition model for image processing
-      const response = await this.client.chat.completions.create({
+      const response = await this.createChatCompletion({
         model: this.imageRecognitionModel,
         messages: fullPrompt,
         temperature: 0.7,

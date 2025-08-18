@@ -25,22 +25,28 @@ Default to using Bun instead of Node.js.
 
 ## Testing
 
+Let's follow Kent Beck's TDD.
+
+Write the test first. Then implementation.
+
+Care about test coverages.
+
 NEVER FIX THINGS BEFORE TESTING. ALWAYS RUN THE TEST.
 
 Use `bun test` to run tests.
 
 ```bash
-# Run all tests
-bun test
-
-# Run tests in watch mode
-bun test --watch
-
 # Run tests with coverage
 bun test --coverage
 
+# Run all tests
+bun test
+
 # Run specific test files
 bun test tests/database/PersonalityDB.test.ts
+
+# Run tests in watch mode
+bun test --watch
 ```
 
 ```ts#index.test.ts

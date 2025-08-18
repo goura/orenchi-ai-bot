@@ -8,7 +8,7 @@ on:
 
 jobs:
   test:
-    name: Test on Ubuntu
+    name: Unit testing
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

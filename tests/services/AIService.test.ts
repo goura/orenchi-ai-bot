@@ -189,4 +189,201 @@ describe("AIService", () => {
       max_tokens: (aiService as any).getMaxTokens()
     });
   });
+
+  test("should add web_search_options for gpt-4o-search-preview model", async () => {
+    const mockResponse = {
+      choices: [{
+        message: {
+          content: "Mock AI response with web search"
+        }
+      }]
+    };
+
+    mockClient.chat.completions.create.mockResolvedValue(mockResponse);
+
+    // Call the private method directly using type assertion
+    const response = await (aiService as any).createChatCompletion({
+      model: "gpt-4o-search-preview",
+      messages: [{ role: "user" as const, content: "Hello" }],
+      temperature: 0.7,
+      max_tokens: (aiService as any).getMaxTokens()
+    });
+
+    expect(response).toBe(mockResponse);
+    expect(mockClient.chat.completions.create).toHaveBeenCalledWith({
+      model: "gpt-4o-search-preview",
+      messages: [{ role: "user" as const, content: "Hello" }],
+      temperature: 0.7,
+      max_tokens: (aiService as any).getMaxTokens(),
+      web_search_options: {}
+    });
+  });
+
+  test("should add web_search_options for gpt-4o-mini-search-preview model", async () => {
+    const mockResponse = {
+      choices: [{
+        message: {
+          content: "Mock AI response with web search"
+        }
+      }]
+    };
+
+    mockClient.chat.completions.create.mockResolvedValue(mockResponse);
+
+    // Call the private method directly using type assertion
+    const response = await (aiService as any).createChatCompletion({
+      model: "gpt-4o-mini-search-preview",
+      messages: [{ role: "user" as const, content: "Hello" }],
+      temperature: 0.7,
+      max_tokens: (aiService as any).getMaxTokens()
+    });
+
+    expect(response).toBe(mockResponse);
+    expect(mockClient.chat.completions.create).toHaveBeenCalledWith({
+      model: "gpt-4o-mini-search-preview",
+      messages: [{ role: "user" as const, content: "Hello" }],
+      temperature: 0.7,
+      max_tokens: (aiService as any).getMaxTokens(),
+      web_search_options: {}
+    });
+  });
+
+  test("should not add web_search_options for gpt-4o model", async () => {
+    const mockResponse = {
+      choices: [{
+        message: {
+          content: "Mock AI response without web search"
+        }
+      }]
+    };
+
+    mockClient.chat.completions.create.mockResolvedValue(mockResponse);
+
+    // Call the private method directly using type assertion
+    const response = await (aiService as any).createChatCompletion({
+      model: "gpt-4o",
+      messages: [{ role: "user" as const, content: "Hello" }],
+      temperature: 0.7,
+      max_tokens: (aiService as any).getMaxTokens()
+    });
+
+    expect(response).toBe(mockResponse);
+    expect(mockClient.chat.completions.create).toHaveBeenCalledWith({
+      model: "gpt-4o",
+      messages: [{ role: "user" as const, content: "Hello" }],
+      temperature: 0.7,
+      max_tokens: (aiService as any).getMaxTokens()
+    });
+    // Verify web_search_options was not added
+    const callArgs = mockClient.chat.completions.create.mock.calls[0][0];
+    expect(callArgs).not.toHaveProperty('web_search_options');
+  });
+
+  test("should process citations from Perplexity Sonar response", async () => {
+    const mockResponse = {
+      choices: [{
+        message: {
+          content: "Here are some recent AI developments."
+        }
+      }],
+      search_results: [
+        {
+          title: "Latest AI Breakthroughs and News: May, June, July 2025",
+          url: "https://www.crescendo.ai/news/latest-ai-news-and-updates"
+        },
+        {
+          title: "AI Magazine: Home of AI and Artificial Intelligence News",
+          url: "https://aimagazine.com"
+        }
+      ]
+    };
+
+    mockClient.chat.completions.create.mockResolvedValue(mockResponse);
+    // Mock webSearchService to return sonar
+    (aiService as any).webSearchService.shouldSearch.mockResolvedValue({ type: "sonar", query: "latest AI news" });
+
+    const messages = [{ role: "user" as const, content: "What's new in AI?" }];
+    
+    const response = await aiService.generateResponse(messages, null, true);
+    
+    expect(response).toBe("Here are some recent AI developments.\n\n[1] [Latest AI Breakthroughs and News: May, June, July 2025](https://www.crescendo.ai/news/latest-ai-news-and-updates)\n[2] [AI Magazine: Home of AI and Artificial Intelligence News](https://aimagazine.com)");
+  });
+
+  test("should handle Perplexity Sonar response without citations", async () => {
+    const mockResponse = {
+      choices: [{
+        message: {
+          content: "Here's a general response without citations."
+        }
+      }]
+      // No search_results property
+    };
+
+    mockClient.chat.completions.create.mockResolvedValue(mockResponse);
+
+    const messages = [{ role: "user" as const, content: "Hello" }];
+    
+    const response = await aiService.generateResponse(messages);
+    
+    
+    expect(response).toBe("Here's a general response without citations.");
+  });
+
+  test("should not process citations for non-Sonar models", async () => {
+    const mockResponse = {
+      choices: [{
+        message: {
+          content: "Here's a response from a non-Sonar model."
+        }
+      }],
+      search_results: [
+        {
+          title: "Some Article",
+          url: "https://example.com"
+        }
+      ],
+      model: "gpt-4o"
+    };
+
+    mockClient.chat.completions.create.mockResolvedValue(mockResponse);
+    // Mock webSearchService to return none so we use the default model
+    (aiService as any).webSearchService.shouldSearch.mockResolvedValue({ type: "none" });
+
+    const messages = [{ role: "user" as const, content: "Hello" }];
+    
+    const response = await aiService.generateResponse(messages, null, true);
+    
+    // Should not include citations since we're not using a Sonar model
+    expect(response).toBe("Here's a response from a non-Sonar model.");
+  });
+  test("should not add web_search_options for gpt-4o:online model", async () => {
+    const mockResponse = {
+      choices: [{
+        message: {
+          content: "Mock AI response without web search"
+        }
+      }]
+    };
+
+    mockClient.chat.completions.create.mockResolvedValue(mockResponse);
+
+    // Call the private method directly using type assertion
+    const response = await (aiService as any).createChatCompletion({
+      model: "gpt-4o:online",
+      messages: [{ role: "user" as const, content: "Hello" }],
+      temperature: 0.7,
+      max_tokens: (aiService as any).getMaxTokens()
+    });
+
+    expect(response).toBe(mockResponse);
+    expect(mockClient.chat.completions.create).toHaveBeenCalledWith({
+      model: "gpt-4o:online",
+      messages: [{ role: "user" as const, content: "Hello" }],
+      temperature: 0.7,
+      max_tokens: (aiService as any).getMaxTokens()
+    });
+    // Verify web_search_options was not added
+    const callArgs = mockClient.chat.completions.create.mock.calls[0][0];
+    expect(callArgs).not.toHaveProperty('web_search_options');
+  });
 });
