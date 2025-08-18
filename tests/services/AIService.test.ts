@@ -280,22 +280,33 @@ describe("AIService", () => {
   });
 
   test("should process citations from Perplexity Sonar response", async () => {
+    // Using the actual format returned by Perplexity Sonar as shown in the feedback
     const mockResponse = {
       choices: [{
         message: {
-          content: "Here are some recent AI developments."
+          content: "Here are some recent AI developments.",
+          annotations: [
+            {
+              "type": "url_citation",
+              "url_citation": {
+                "end_index": 0,
+                "start_index": 0,
+                "title": "Latest AI Breakthroughs and News: May, June, July 2025",
+                "url": "https://www.crescendo.ai/news/latest-ai-news-and-updates"
+              }
+            },
+            {
+              "type": "url_citation",
+              "url_citation": {
+                "end_index": 0,
+                "start_index": 0,
+                "title": "AI Magazine: Home of AI and Artificial Intelligence News",
+                "url": "https://aimagazine.com"
+              }
+            }
+          ]
         }
-      }],
-      search_results: [
-        {
-          title: "Latest AI Breakthroughs and News: May, June, July 2025",
-          url: "https://www.crescendo.ai/news/latest-ai-news-and-updates"
-        },
-        {
-          title: "AI Magazine: Home of AI and Artificial Intelligence News",
-          url: "https://aimagazine.com"
-        }
-      ]
+      }]
     };
 
     mockClient.chat.completions.create.mockResolvedValue(mockResponse);
@@ -385,5 +396,46 @@ describe("AIService", () => {
     // Verify web_search_options was not added
     const callArgs = mockClient.chat.completions.create.mock.calls[0][0];
     expect(callArgs).not.toHaveProperty('web_search_options');
+  });
+
+  test("should process citations from Perplexity Sonar-Pro response", async () => {
+    // Using the actual format returned by Perplexity Sonar-Pro as shown in the feedback
+    const mockResponse = {
+      choices: [{
+        message: {
+          content: "Here are some in-depth AI developments.",
+          annotations: [
+            {
+              "type": "url_citation",
+              "url_citation": {
+                "end_index": 0,
+                "start_index": 0,
+                "title": "Advanced AI Research: 2025 Breakthroughs",
+                "url": "https://www.ai-research.org/2025-breakthroughs"
+              }
+            },
+            {
+              "type": "url_citation",
+              "url_citation": {
+                "end_index": 0,
+                "start_index": 0,
+                "title": "Deep Learning Advances in Natural Language Processing",
+                "url": "https://nlp-advances.org"
+              }
+            }
+          ]
+        }
+      }]
+    };
+
+    mockClient.chat.completions.create.mockResolvedValue(mockResponse);
+    // Mock webSearchService to return sonar-pro
+    (aiService as any).webSearchService.shouldSearch.mockResolvedValue({ type: "sonar-pro", query: "in-depth AI analysis" });
+
+    const messages = [{ role: "user" as const, content: "詳しく教えてください。AIの最新動向について深く分析してください。" }];
+    
+    const response = await aiService.generateResponse(messages, null, true);
+    
+    expect(response).toBe("Here are some in-depth AI developments.\n\n[1] [Advanced AI Research: 2025 Breakthroughs](https://www.ai-research.org/2025-breakthroughs)\n[2] [Deep Learning Advances in Natural Language Processing](https://nlp-advances.org)");
   });
 });
