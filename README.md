@@ -1,5 +1,7 @@
 # Orenchi AI Bot
 
+[![codecov](https://codecov.io/github/goura/orenchi-ai-bot/graph/badge.svg?token=Q2RLDQEIU8)](https://codecov.io/github/goura/orenchi-ai-bot)
+
 A conversational AI chatbot for Discord with private, one-on-one conversations and customizable personalities.
 
 ## Features

@@ -28,3 +28,9 @@ jobs:
           DISCORD_CLIENT_ID: 012345678901234567
           DISCORD_GUILD_ID: 987654321098765432
           RESPOND_TO_PUBLIC_NO_MENTION: true
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: goura/orenchi-ai-bot
