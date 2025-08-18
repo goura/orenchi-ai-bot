@@ -5,10 +5,11 @@ export interface WebSearchServiceConfig {
   baseURL?: string;
 }
 
-export type WebSearchResult = 
+export type WebSearchResult =
   | { type: "search", query: string }
   | { type: "none" }
-  | { type: "sonar", query: string };
+  | { type: "sonar", query: string }
+  | { type: "sonar-pro", query: string };
 
 export class WebSearchService {
   private client: OpenAI;
@@ -32,13 +33,14 @@ export class WebSearchService {
       The conversation history is:
       ${conversationContext}
 
-      You have three options:
-      1. SONAR: If the message is a question about recent facts, news, or unpopular specialized facts.
-      2. SEARCH: If the message is a question about less-known things that would benefit from a web search.
-      3. NONE: If the user is greeting, conversing, or asking about well-known facts (geographical, historical, scientific).
+      You have four options:
+      1. SONAR_PRO: If the message requests deep insights, detailed analysis, or contains phrases like "詳しく教えて", "詳細に教えて", "search deeply", "deep insights", or "in-depth analysis".
+      2. SONAR: If the message is a question about recent facts, news, or unpopular specialized facts.
+      3. SEARCH: If the message is a question about less-known things that would benefit from a web search.
+      4. NONE: If the user is greeting, conversing, or asking about well-known facts (geographical, historical, scientific).
 
-      Respond with a JSON object in the format {"decision": "SONAR" | "SEARCH" | "NONE", "query": "search query" | null}.
-      The "query" should be a concise search query if the decision is SONAR or SEARCH, otherwise null.
+      Respond with a JSON object in the format {"decision": "SONAR_PRO" | "SONAR" | "SEARCH" | "NONE", "query": "search query" | null}.
+      The "query" should be a concise search query if the decision is SONAR_PRO, SONAR, or SEARCH, otherwise null.
     `;
 
     try {
@@ -60,7 +62,9 @@ export class WebSearchService {
 
       const result = JSON.parse(content);
       
-      if (result.decision === "SONAR" && result.query) {
+      if (result.decision === "SONAR_PRO" && result.query) {
+        return { type: "sonar-pro", query: result.query };
+      } else if (result.decision === "SONAR" && result.query) {
         return { type: "sonar", query: result.query };
       } else if (result.decision === "SEARCH" && result.query) {
         return { type: "search", query: result.query };

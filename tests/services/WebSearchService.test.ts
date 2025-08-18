@@ -180,4 +180,30 @@ describe("WebSearchService", () => {
       query: "quantum computing applications"
     });
   });
+
+  test("should return 'sonar-pro' decision with query for deep insights request", async () => {
+    const mockResponse = {
+      choices: [{
+        message: {
+          content: JSON.stringify({
+            decision: "SONAR_PRO",
+            query: "detailed analysis of quantum computing"
+          })
+        }
+      }]
+    };
+
+    mockClient.chat.completions.create.mockResolvedValue(mockResponse);
+
+    const messages = [
+      { role: "user", content: "詳しく教えてください。量子コンピューティングについて深く分析してください。" }
+    ];
+    
+    const result = await webSearchService.shouldSearch(messages);
+    
+    expect(result).toEqual({
+      type: "sonar-pro",
+      query: "detailed analysis of quantum computing"
+    });
+  });
 });

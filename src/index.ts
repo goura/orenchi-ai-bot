@@ -210,8 +210,12 @@ client.on(Events.MessageCreate, async (message: Message) => {
       if (!(message.channel instanceof PartialGroupDMChannel)) {
         // Generate a varied response for the public channel
         const publicResponse = await bot.generatePublicResponse(message.author.id, message.content, channel.toString());
+        
+        // Create mentions for all users who will be in the private channel
+        const userMentions = users.map(user => `<@${user.id}>`).join(' ');
+        
         await message.reply(
-          `<@${message.author.id}> ${publicResponse} ${channel.toString()}`
+          `${userMentions} ${publicResponse} ${channel.toString()}`
         );
       }
       
