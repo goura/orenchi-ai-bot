@@ -21,20 +21,14 @@ The Discord AI Chatbot is now fully implemented with all features outlined in th
 - Support for both slash commands and mentions to start conversations
 - Context-aware responses using actual Discord message history
 - Fallback to in-memory history if Discord history fetching fails
-- Dynamic model selection based on message length:
-  * Short messages (< 100 tokens): Lightweight model
-  * Medium messages (100-500 tokens): Balanced model
-  * Long messages (> 500 tokens): Powerful model
 
 ### 4. Slash Commands
 - `/personality [text]` - Set your custom personality for the bot
-- `/start-chat` - Start a new private conversation
-- `/end-chat` - End current conversation and delete channel
+- `/ai-start-chat` - Start a new private conversation
+- `/ai-end-chat` - End current conversation and delete channel
 
 ### 5. Testing
 - Comprehensive test coverage using Bun's built-in test runner
-- All core functionality is tested
-- 100% test coverage across all source files
 
 ## Technology Stack
 

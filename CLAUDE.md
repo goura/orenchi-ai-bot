@@ -89,12 +89,6 @@ test("random", async () => {
 
 The bot uses OpenRouter API with OpenAI ChatCompletion compatible interface. This allows us to use various models including Gemini, GPT, Claude, and others through a consistent API.
 
-- Models are dynamically selected based on message size:
-  * Short messages (< 100 tokens): Lightweight model (e.g., Mistral 7B)
-  * Medium messages (100-500 tokens): Balanced model (e.g., OpenRouter's automatic model)
-  * Long messages (> 500 tokens): Powerful model (e.g., GPT-4, Claude 2)
-- To use a specific model, specify it in the model parameter like `google/gemini-2.5-pro`
-
 ## Frontend
 
 Use HTML imports with `Bun.serve()`. Don't use `vite`. HTML imports fully support React, CSS, Tailwind.
